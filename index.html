@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html lang="de-DE">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    <script src="mootools-core.js"></script>
+    <script src="mootools-more.js"></script>
+    <script src="sunrize.js"></script>
+</head>
+<body>
+<a href="http://192.168.1.11/mootools/sunrise_lightbox/james-wilson.jpg" id="testlink">Simple Link</a>
+    <script>
+        var sunrize = new Sunrize({
+            items: document.id(testlink)
+        });
+/*
+        document.id(testlink).addEvent('click', function(event) {
+            event.preventDefault();
+            sunrize.open('http://192.168.1.11/mootools/sunrise_lightbox/james-wilson.jpg');
+        });*/
+    </script>
+</body>
+</html>
