@@ -33,10 +33,12 @@ var Sunrize = new Class({
 
     initialize: function(options) {
 
-
+        this.openStatus = false;
         this.setOptions(options);
         this.regGuiItems = {};//Object for register all gui Elements for the class
+        //TODO Change Data storage to json format!
         this.dataObj = {};
+        this.curItem = 0;
 
         this.overlay = new Spinner(document.body, {
             'class': 'sunrize',
@@ -44,14 +46,8 @@ var Sunrize = new Class({
         });
         this._initGuiElements();
 
-        var data = {
-            item1: {
-              content: 'hgfhgf',
-              type: 'image'
-            }
-        }
-
-        this._normalizeData(this.options.items);
+        if(this.options.items)
+            //this._normalizeData(this.options.items);
         this.spinnerOgSize = $$('.spinner-content')[0].getSize();
     },
 
@@ -125,6 +121,10 @@ var Sunrize = new Class({
                 if(item.get('tag') === 'a' && item.get('href').test(/\.(jpg|jpeg|png|gif|bmp)(.*)?$/i)) {
                     return 'image'
                 }
+            } else if(dataType === 'object') {
+                if(item.content.test(/\.(jpg|jpeg|png|gif|bmp)(.*)?$/i)) {
+                    return 'image'
+                }
             }
         }
 
@@ -159,18 +159,19 @@ var Sunrize = new Class({
 
             var c = 0;
             Object.each(data, function(val, key, obj) {
-                if(val.content && val.type) {
+                if(val.content) {
                     self.dataObj['item'+c] = val;
                     self.dataObj['item'+c].count = c;
                     if(!val.title) {
                         self.dataObj['item'+c].title = '';
                     }
+                    self.dataObj['item'+c].type = checkType(val);
                     c++;
                 }
 
 
             });
-            console.log(dataObj);
+            //console.log(dataObj);
 
         } else if(dataTypeOf === 'elements') {
             //multiitems
@@ -197,9 +198,22 @@ var Sunrize = new Class({
         // Sorry not supported
     }.protect(),
 
+    isOpen: function() {
+        return (this.openStatus === true) ? true : false;
+    }.protect(),
+
     displayHandler: {
         image: function(item) {
-            alert('bild');
+            if(!this.isOpen()) {
+                this.open();
+            }
+            var myImage = Asset.image(item.content, {
+                id: 'myImage',
+                title: 'myImage',
+                onLoad: function(image) {
+                    image.inject(this.regGuiItems.contentMain);
+                }.bind(this)
+            });
         },
         youtube: function(item) {
             alert('youtube');
@@ -211,76 +225,28 @@ var Sunrize = new Class({
 
     _actionSwitch: function(items) {
         var self = this;
+        if(Object.getLength(self.dataObj) > 1) {
+            self.regGuiItems.next.setStyle('display', 'block');
+        }
+        //console.log(Object.keyOf(self.dataObj.count, ));
         Object.each(self.dataObj, function(item, key) {
-            self.displayHandler[item.type](item);
-        });
+            self.displayHandler[item.type].call(this, item);
+        }, this);
     }.protect(),
 
-    open: function(item) {
+    open: function(item, title) {
+        item = item || false;
+        title = item || false;
+        this.openStatus = true;
         this.overlay.show();
+
+        this._normalizeData(item);
         //this.setTest(item);
     },
 
     close: function() {
+        this.openStatus = false;
         this.overlay.hide();
-        /* old poc stuff
-
-        $$('.spinner-content')[0].setStyle('overflow', 'hidden');
-        $$('.sunrize-content').fade('out');
-        var myEffect = new Fx.Morph($$('.spinner-content')[0], {
-            link: 'chain',
-            onComplete: function() {
-                this.overlay.hide();
-                $$('.sunrize-content')[0].set('html', '');
-                $$('.spinner-content')[0].setStyles({
-                    'width': 0,
-                    'margin-left': 0
-                });
-            }.bind(this)
-        });
-        myEffect.start({
-            'height': 0,
-            'margin-top': -50,
-            'borderWidth': 0
-        })*/
+        this.regGuiItems.contentMain.set('html', '');
     }
-    /* old poc stuff
-    setTest: function(item){
-
-        console.log(item);
-        $$('.spinner-content')[0].setStyle('overflow', 'visible');
-        $$('.spinner-content')[0].setStyle('margin-top', 0);
-        $$('.spinner-content')[0].setStyle('borderWidth', 1);
-
-        var myImage = Asset.image(item, {
-            id: 'myImage',
-            title: 'myImage',
-            onLoad: function(image) {
-                $$('.spinner-msg').fade('out');
-
-                var myEffect = new Fx.Morph($$('.spinner-content')[0], {
-                    link: 'chain',
-                    onComplete: function() {
-                        image.inject($$('.sunrize-content')[0]);
-
-                        $$('.sunrize-content')[0].fade('in');
-
-                    }
-                });
-
-
-                myEffect.start({
-                    'width': image.get('width'),
-                    'margin-left': -(image.get('height') / 3),
-                    'height': image.get('height'),
-                    'margin-top': -(image.get('height') / 3)
-                })
-
-
-            }
-        });
-
-/*
-
-    }*/
 });

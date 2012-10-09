@@ -11,9 +11,21 @@
 <body>
 <a href="http://192.168.1.11/mootools/sunrise_lightbox/james-wilson.jpg" id="testlink">Simple Link</a>
     <script>
-        var sunrize = new Sunrize({
-            items: document.id(testlink)
+        var sunrize = new Sunrize({});
+
+        document.id('testlink').addEvent('click', function(e) {
+            e.preventDefault();
+            var t = {
+                item1: {
+                    content: 'http://localhost/mootools-sunrize/image.png'
+                },
+                item2: {
+                    content: 'http://localhost/mootools-sunrize/james-wilson.jpg'
+                }
+            }
+            sunrize.open(t);
         });
+
 /*
         document.id(testlink).addEvent('click', function(event) {
             event.preventDefault();
