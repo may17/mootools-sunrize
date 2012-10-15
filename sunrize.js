@@ -36,14 +36,17 @@ var Sunrize = new Class({
         this.openStatus = false;
         this.setOptions(options);
         this.regGuiItems = {};//Object for register all gui Elements for the class
-        //TODO Change Data storage to json format!
         this.dataObj = {};
         this.curItem = 0;
 
+        // Todo implement Loading Message
         this.overlay = new Spinner(document.body, {
-            'class': 'sunrize',
-            message: 'Loading'
+            'class': 'sunrize'
+            //message: 'Loading'
         });
+
+
+
         this._initGuiElements();
 
         if(this.options.items)
@@ -52,8 +55,14 @@ var Sunrize = new Class({
     },
 
     goTo: function(direction) {
-        alert(direction);
-    }.protect(),
+        if(direction === 'previous') {
+            this.curItem--;
+        } else if(direction === 'next') {
+            this.curItem++;
+        }
+
+        this._actionSwitch();
+    },
 
     _initGuiElements: function() {
         var buttonObj = this.options.buttons,
@@ -61,6 +70,7 @@ var Sunrize = new Class({
             guiCombined,
             guiElements;
 
+        // TODO make gui Elements accesible in the hole class
         guiElements = {
             close: {
                 tag: 'div',
@@ -174,7 +184,7 @@ var Sunrize = new Class({
             //console.log(dataObj);
 
         } else if(dataTypeOf === 'elements') {
-            //multiitems
+            //Todo add Elements as type
         } else if(dataTypeOf === 'element') {
             //single item no next or prev buttons needed
             var itemObj = Object.clone(blueprint);
@@ -190,8 +200,8 @@ var Sunrize = new Class({
             throw Error('Sorry, the typ of item you are trying to include is not supported. Please checkout our wiki on github.');
         }
 
-        //console.log(self.dataObj);
 
+        this.curItem = this.dataObj.item0.count;
         this._actionSwitch();
         //element collection
 
@@ -203,7 +213,10 @@ var Sunrize = new Class({
     }.protect(),
 
     displayHandler: {
+
+
         image: function(item) {
+            this.regGuiItems.contentMain.set('html','');
             if(!this.isOpen()) {
                 this.open();
             }
@@ -211,7 +224,28 @@ var Sunrize = new Class({
                 id: 'myImage',
                 title: 'myImage',
                 onLoad: function(image) {
-                    image.inject(this.regGuiItems.contentMain);
+                    this.regGuiItems.contentMain.set('html','');
+                    var width = image.get('width');
+                    var height = image.get('height');
+
+                    var myEffect = new Fx.Morph(document.getElement('.spinner-content'), {
+                        onComplete: function() {
+                            image.setStyle('opacity', 0);
+                            image.inject(this.regGuiItems.contentMain);
+                            image.fade('in');
+                        }.bind(this)
+                    });
+
+
+                    //image.inject(this.regGuiItems.contentMain);
+                    //Todo Check positioning bug
+                    myEffect.start({
+                        'width': width,
+                        'height': height,
+                        'margin-left': -(width / 2),
+                        'margin-top': -(height / 2)
+                    });
+                    //
                 }.bind(this)
             });
         },
@@ -224,29 +258,56 @@ var Sunrize = new Class({
     },
 
     _actionSwitch: function(items) {
+        //TODO refactoring
+
         var self = this;
-        if(Object.getLength(self.dataObj) > 1) {
+        if(Object.getLength(self.dataObj) > 1 && Object.getLength(self.dataObj) > (self.curItem + 1)) {
             self.regGuiItems.next.setStyle('display', 'block');
+
+        } else {
+            self.regGuiItems.next.setStyle('display', 'none');
         }
-        //console.log(Object.keyOf(self.dataObj.count, ));
-        Object.each(self.dataObj, function(item, key) {
-            self.displayHandler[item.type].call(this, item);
-        }, this);
+
+        if(Object.getLength(self.dataObj) > 1 && self.curItem > 0) {
+            self.regGuiItems.previous.setStyle('display', 'block');
+
+        } else {
+            self.regGuiItems.previous.setStyle('display', 'none');
+        }
+
+        self.displayHandler[self.dataObj['item'+self.curItem].type].call(this, self.dataObj['item'+self.curItem]);
     }.protect(),
 
     open: function(item, title) {
         item = item || false;
         title = item || false;
+        //Todo add show button method
+        this.regGuiItems.close.setStyle('display', 'block');
         this.openStatus = true;
+        this._normalizeData(item);
         this.overlay.show();
 
-        this._normalizeData(item);
+
         //this.setTest(item);
     },
 
     close: function() {
         this.openStatus = false;
+
+        //TODO add Hide Method
+        this.regGuiItems.next.setStyle('display', 'none');
+        this.regGuiItems.previous.setStyle('display', 'none');
+        this.regGuiItems.close.setStyle('display', 'none');
+
         this.overlay.hide();
         this.regGuiItems.contentMain.set('html', '');
+
+        //TODO add a bether reset
+        this.overlay.content.setStyles({
+            'margin-left': 0,
+            'margin-top': 0,
+            'width': '0',
+            'height': '0'
+        });
     }
 });
